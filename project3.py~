@@ -193,7 +193,7 @@ class Archive:
         self.writeToArchive();
 
 
-#DataBlockEntry[index].readFromArchive(1, line)
+#dataEntries[index].readFromArchive(1, line)
 
      def addToArchive( self, filename ):
 	if (len(filename) >8):
@@ -201,22 +201,11 @@ class Archive:
 	    exit()
 	thefile = open( filename, "r")
 	archive = open( ARCHIVE_FILENAME, "w")
-	
-	#self.archiveEntries[0].readFromArchive(filename)
+	self.archiveEntries[0].update(filename, os.path.getsize(filename))
+	self.addData(1 , thefile, 0)
+#	self.dataEntries[0].readFromArchive(1, thefile.read())
 
-#	print(thefile.read())
-
-#	self.dataEntries[0].readFromArchive(1, 'testing 101') 
-	self.dataEntries[0].writeToArchive(archive)
-	
-	
-#	self.archiveEntries[0].writeToArchive(archive)
-#	self.archiveEntries[0].update()
         # must do validation on
-#	x = ArchiveEntry(filename, os.path.getsize(filename))
-
-#	self.archiveEntries[0].writeToArchive(archive)
-	
 #	x.writeToArchive(thefile)
         # filename - done
         # filesize vs maximum allowed per file
@@ -227,6 +216,35 @@ class Archive:
         # the datablock allocated for the file must be the 1st available starting at idx = 0
         #
         print("not implemented, this is your assignment\n")
+     def addData(self, id, afile, location):
+	number = 0
+	count = 0
+	for line in afile:
+	    line = line.strip('\n')
+	    lineLength = len(line)
+	    if((lineLength//32) > 4):
+		print ("Text file longer than 128 characters! Can not archive!")
+		exit()
+	    if(lineLength > 32):
+	    	for i in range((lineLength//32) + 1):
+		    remainder = lineLength - number
+		    if((remainder) < 32):
+			break
+		    self.dataEntries[(id - 1)].readFromArchive(id, line[(0+number):(32 + number)])
+		    self.archiveEntries[location].datablocks[count] = str(location)
+		    count = count + 1
+		    id = id + 1
+#		    print(id)
+		    number += 32
+	    if((lineLength % 32) != 0):
+		lineLength = len(line[number:])
+		print(line[number:])
+#		print(lineLength)
+		additionalZs = 32 - lineLength
+#(additionalZs * "Z")
+		print(id)
+		self.dataEntries[(id - 1)].readFromArchive(id, (line[number:]) + (additionalZs * "Z"))
+		id += 1
 
      def removeFromoArchive( self, filename ):
         # it must validate the file is or not in the archive and produce an error message
