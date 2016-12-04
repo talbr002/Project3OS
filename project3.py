@@ -159,17 +159,6 @@ class Archive:
 	for i in range(MAX_ENTRY):
 		self.archiveEntries.append(ArchiveEntry())
 		self.dataEntries.append(DataBlock())
-#		heapq.heappush(LOWEST, (i , self.dataEntries[i]))
-#		heapq.heappush(OPEN_ENTRY, (i, self.archiveEntries[i]))
-	
-#	print(LOWEST[0][1])
-	
-#	print(heapq.heappop(LOWEST)[0])
-#	print(heapq.heappop(LOWEST)[0])
-	
-
-#        self.archiveEntries = [ ArchiveEntry()] * MAX_ENTRY
-#        self.dataEntries    = [ DataBlock()] * MAX_ENTRY
 
      def dataTest(self):
 	for i in range(len(OPEN_DATA)):
@@ -188,14 +177,12 @@ class Archive:
 
      def readFromArchive( self ):
         archive = open( ARCHIVE_FILENAME, "r")
-#	print("OpenData length: {}".format(len(OPEN_DATA)))
         count = 0
         datablockid = 1; # this is the index of the archive z data
         for line in archive:
             line = line.rstrip('\n')
             if count < MAX_ENTRY:
 	       if(line[:3] == '000'):
-#		   print(count)
 	           heapq.heappush(OPEN_ENTRY, (count, self.archiveEntries[count]))
 	       else:
 		   print(line)
@@ -203,9 +190,7 @@ class Archive:
             else:
 	       index = count - 32
 	       if(line == 'ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ'):
-#		   print("Z index: {}".format(index))
-		   heapq.heappush(OPEN_DATA, (index, self.dataEntries[index]))
-#		   print("OpenData length: {}".format(len(OPEN_DATA)))
+		   heapq.heappush(OPEN_DATA, (index, self.dataEntries[index])))
 	       else:
 		   
 	           print("inserting line line into archive: {}".format(line))
@@ -229,7 +214,6 @@ class Archive:
         self.writeToArchive();
 
 
-#dataEntries[index].readFromArchive(1, line)
 
      def addToArchive( self, filename ):
 	if (len(filename) >8):
@@ -250,9 +234,8 @@ class Archive:
 	
 	self.archiveEntries[entryLocation].update(filename, os.path.getsize(filename))
 	self.addData(thefile, entryLocation)
-#	self.dataEntries[0].readFromArchive(1, thefile.read())
+
         # must do validation on
-#	x.writeToArchive(thefile)
         # filename - done
         # filesize vs maximum allowed per file
         # filesize vs free space
@@ -314,16 +297,14 @@ class Archive:
 
         print("not implemented, this is your assignment\n")
      def removeData(self, filename):
-	print("FILE_NAME_CHECKER[filename]: {}".format(FILE_NAME_CHECKER[filename]))
 	removeBlocks = self.archiveEntries[FILE_NAME_CHECKER[filename]].DBL()
 	self.archiveEntries[FILE_NAME_CHECKER[filename]].update()
-#	heapq.heappush(OPEN_ENTRY, (FILE_NAME_CHECKER[filename], self.archiveEntries[FILE_NAME_CHECKER[filename]]))
 	self.archiveEntries[FILE_NAME_CHECKER[filename]].removeDataBlocks()
 	for item in removeBlocks:
 	    if(item > 0):
 		print(item)
 		self.dataEntries[(item -1)].readFromArchive((item), "Z" * MAX_BYTE_PER_DATABLOCK)
-#		heapq.heappush(OPEN_DATA, ((item- 1), self.dataEntries[item- 1]))
+
 		
 		
 	
@@ -338,7 +319,6 @@ def addToArchive():
      print("Adding to Archive:" + filename)
      archive = Archive()
      archive.readFromArchive()
-#     archive.dataTest()
      archive.list()
      archive.addToArchive( filename )
      archive.list()
