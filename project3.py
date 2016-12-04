@@ -238,12 +238,11 @@ class Archive:
 	    exit()
 
 	#Filesize vs free space validation
-	print("open data length: {}".format(len(OPEN_DATA)))
 	length = ((os.path.getsize(filename)) / float(32))
 	if not OPEN_DATA:
 	    print("Archive full!\nCan not Archive {}".format(filename))	
 	    exit()
-	print("length = {}".format(length))
+
 	if(len(OPEN_DATA) < length):
 	    print("Not enough space in archive!\nThere is only {} locations left in archive. Your file requires {} spaces!".format((len(OPEN_DATA)), int(ceil(length))))
 	    exit()
@@ -274,7 +273,6 @@ class Archive:
 		    if((remainder) < 32):
 			break
 		    dataLocation = heapq.heappop(OPEN_DATA)[0]
-		    print("adding data to location {}".format(dataLocation))
 		    self.dataEntries[(dataLocation)].readFromArchive(dataLocation, line[(0+number):(32 + number)])			
 		    self.archiveEntries[location].datablocks[count - 1] = (dataLocation + 1)
 		    count += 1
@@ -284,7 +282,6 @@ class Archive:
 		additionalZs = 32 - lineLength
 
 		dataLocation = heapq.heappop(OPEN_DATA)[0]
-		print("adding data to location {}".format(dataLocation))
 		self.dataEntries[(dataLocation)].readFromArchive((dataLocation), (line[number:]) + (additionalZs * "Z"))
 		self.archiveEntries[location].datablocks[count -  1] = (dataLocation + 1)
 		count += 1
@@ -331,7 +328,6 @@ def addToArchive():
      print("Adding to Archive:" + filename)
      archive = Archive()
      archive.readFromArchive()
-     archive.list()
      archive.addToArchive( filename )
      archive.list()
      archive.writeToArchive();
@@ -341,8 +337,8 @@ def removeFromArchive():
      print("Removing from Archive:" + filename)
      archive = Archive()
      archive.readFromArchive()
-     archive.list()
      archive.removeFromArchive( filename )
+     archive.list()
      archive.writeToArchive();
 
 def listArchive():
