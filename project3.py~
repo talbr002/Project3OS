@@ -78,6 +78,7 @@ ARCHIVE_FILENAME = "archive.dat"
 
 OPEN_DATA = []
 OPEN_ENTRY = []
+FILE_NAME_CHECKER = {}
 
 #datablock id starts at 1
 class DataBlock:
@@ -114,7 +115,12 @@ class ArchiveEntry:
 	#MAX_DIGIT_FOR_FILESIZE = 3
          self.size     = int(line[:MAX_DIGIT_FOR_FILESIZE])#int // take the first three characters of the line
 	#storing
+	#3 + 8
+	 
          self.filename = line[MAX_DIGIT_FOR_FILESIZE : MAX_DIGIT_FOR_FILESIZE + MAX_FILENAME]#str
+	 FILE_NAME_CHECKER[self.filename] = 1
+	 db = line[MAX_DIGIT_FOR_FILESIZE + MAX_FILENAME : ]
+	 self.datablocks =[int(db[:2]), int(db[2:4]), int(db[4:6]), int(db[6:8])]
          
      def writeToArchive( self, file ):
          file.write( str(self.size).zfill( MAX_DIGIT_FOR_FILESIZE ))
@@ -138,14 +144,6 @@ class ArchiveEntry:
          self.filename = filename
 	 self.size = size
 
-#     def WTA( self, file ):
-#	 while():
- #            file.write(str(self.size).zfill( MAX_DIGIT_FOR_FILESIZE-(len(self.size) )
-#	     print(len(self.filename))
-#             file.write( self.filename.rjust( MAX_FILENAME - (len(self.filename) ) ) )
-#             for idx in range(0, len( self.datablocks ) ) :
-#                 file.write( str(self.datablocks[ idx ]).zfill( MAX_DIGIT_FOR_BLOCK ) )
-#             file.write("\n")
 
 class Archive:
 
@@ -187,16 +185,15 @@ class Archive:
             line = line.rstrip('\n')
             if count < MAX_ENTRY:
 	       if(line[:3] == '000'):
-		   print(count)
+#		   print(count)
 	           heapq.heappush(OPEN_ENTRY, (count, self.archiveEntries[count]))
-		   pass
 	       else:
+		   print(line)
 	           self.archiveEntries[ count ].readFromArchive( line )
             else:
 	       index = count - 32
 	       if(line == 'ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ'):
-		   heapq.heappush(OPEN_DATA, (index, 'hi'))
-		   pass
+		   heapq.heappush(OPEN_DATA, (index, self.dataEntries[index]))
 	       else:
     		   self.dataEntries[ datablockid - 1 ].readFromArchive( datablockid, line )
                    datablockid = datablockid + 1
@@ -223,6 +220,14 @@ class Archive:
 	if (len(filename) >8):
 	    print("Error, filename must be less than 9 characters!")
 	    exit()
+	print(FILE_NAME_CHECKER)
+	try:
+	    if( (FILE_NAME_CHECKER[filename]) == 1):
+		print("Filename already Found! Can not archive!")
+	except KeyError:
+		pass
+		
+		
 	thefile = open( filename, "r")
 	archive = open( ARCHIVE_FILENAME, "w")
 	entryLocation = heapq.heappop(OPEN_ENTRY)[0]
@@ -243,7 +248,7 @@ class Archive:
         print("not implemented, this is your assignment\n")
      def addData(self, afile, location):
 	number = 0
-	count = 0
+	count = 1
 	for line in afile:
 	    line = line.strip('\n')
 	    lineLength = len(line)
@@ -256,11 +261,10 @@ class Archive:
 		    if((remainder) < 32):
 			break
 		    dataLocation = heapq.heappop(OPEN_DATA)[0]
-		    self.dataEntries[dataLocation - 1].readFromArchive(dataLocation, line[(0+number):(32 + number)])
-		    self.archiveEntries[location].datablocks[count] = str((location + 1))
-		    count = count + 1
-#		    id = id + 1
-#		    print(id)
+		    print(dataLocation)
+		    self.dataEntries[(dataLocation)].readFromArchive(dataLocation, line[(0+number):(32 + number)])			
+		    self.archiveEntries[location].datablocks[count - 1] = (dataLocation + 1)
+		    count += 1
 		    number += 32
 	    if((lineLength % 32) != 0):
 		lineLength = len(line[number:])
@@ -268,9 +272,9 @@ class Archive:
 
 		dataLocation = heapq.heappop(OPEN_DATA)[0]
 		print(dataLocation)
-		self.dataEntries[(dataLocation)].readFromArchive((dataLocation + 1), (line[number:]) + (additionalZs * "Z"))
-		self.archiveEntries[location].datablocks[count] = str(1)
-#		id += 1
+		self.dataEntries[(dataLocation)].readFromArchive((dataLocation), (line[number:]) + (additionalZs * "Z"))
+		self.archiveEntries[location].datablocks[count -  1] = (dataLocation + 1)
+		count += 1
 
      def findEmpty(self):
 	pass
