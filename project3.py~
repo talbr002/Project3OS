@@ -53,6 +53,8 @@ import time
 
 import os
 
+import heapq
+
 #maximum number of entry for files in the archive  and also for data blocks for the archive
 MAX_ENTRY = 32
 
@@ -73,6 +75,9 @@ MAX_DIGIT_FOR_BLOCK = 2
 MAX_DIGIT_FOR_FILESIZE = 3
 
 ARCHIVE_FILENAME = "archive.dat"
+
+OPEN_DATA = []
+OPEN_ENTRY = []
 
 #datablock id starts at 1
 class DataBlock:
@@ -113,7 +118,8 @@ class ArchiveEntry:
          
      def writeToArchive( self, file ):
          file.write( str(self.size).zfill( MAX_DIGIT_FOR_FILESIZE ))
-         file.write( self.filename.rjust( MAX_FILENAME + (len(self.filename) ) ))
+	#+ (len(self.filename) )
+         file.write( self.filename.rjust( MAX_FILENAME  ))
          for idx in range(0, len( self.datablocks ) ) :
 		#max_digit_for_block = 2
              file.write( str(self.datablocks[ idx ]).zfill( MAX_DIGIT_FOR_BLOCK  ) ) #this prints 2 zeros times 4
@@ -149,6 +155,14 @@ class Archive:
 	for i in range(MAX_ENTRY):
 		self.archiveEntries.append(ArchiveEntry())
 		self.dataEntries.append(DataBlock())
+#		heapq.heappush(LOWEST, (i , self.dataEntries[i]))
+#		heapq.heappush(OPEN_ENTRY, (i, self.archiveEntries[i]))
+	
+#	print(LOWEST[0][1])
+	
+#	print(heapq.heappop(LOWEST)[0])
+#	print(heapq.heappop(LOWEST)[0])
+	
 
 #        self.archiveEntries = [ ArchiveEntry()] * MAX_ENTRY
 #        self.dataEntries    = [ DataBlock()] * MAX_ENTRY
@@ -172,10 +186,20 @@ class Archive:
         for line in archive:
             line = line.rstrip('\n')
             if count < MAX_ENTRY:
-               self.archiveEntries[ count ].readFromArchive( line )
+	       if(line[:3] == '000'):
+		   print(count)
+	           heapq.heappush(OPEN_ENTRY, (count, self.archiveEntries[count]))
+		   pass
+	       else:
+	           self.archiveEntries[ count ].readFromArchive( line )
             else:
-               self.dataEntries[ datablockid - 1 ].readFromArchive( datablockid, line )
-               datablockid = datablockid + 1
+	       index = count - 32
+	       if(line == 'ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ'):
+		   heapq.heappush(OPEN_DATA, (index, 'hi'))
+		   pass
+	       else:
+    		   self.dataEntries[ datablockid - 1 ].readFromArchive( datablockid, line )
+                   datablockid = datablockid + 1
             count = count + 1
 
 
@@ -201,8 +225,9 @@ class Archive:
 	    exit()
 	thefile = open( filename, "r")
 	archive = open( ARCHIVE_FILENAME, "w")
-	self.archiveEntries[0].update(filename, os.path.getsize(filename))
-	self.addData(1 , thefile, 0)
+	entryLocation = heapq.heappop(OPEN_ENTRY)[0]
+	self.archiveEntries[entryLocation].update(filename, os.path.getsize(filename))
+	self.addData(thefile, entryLocation)
 #	self.dataEntries[0].readFromArchive(1, thefile.read())
 
         # must do validation on
@@ -216,7 +241,7 @@ class Archive:
         # the datablock allocated for the file must be the 1st available starting at idx = 0
         #
         print("not implemented, this is your assignment\n")
-     def addData(self, id, afile, location):
+     def addData(self, afile, location):
 	number = 0
 	count = 0
 	for line in afile:
@@ -230,21 +255,30 @@ class Archive:
 		    remainder = lineLength - number
 		    if((remainder) < 32):
 			break
-		    self.dataEntries[(id - 1)].readFromArchive(id, line[(0+number):(32 + number)])
-		    self.archiveEntries[location].datablocks[count] = str(location)
+		    dataLocation = heapq.heappop(OPEN_DATA)[0]
+		    self.dataEntries[dataLocation - 1].readFromArchive(dataLocation, line[(0+number):(32 + number)])
+		    self.archiveEntries[location].datablocks[count] = str((location + 1))
 		    count = count + 1
-		    id = id + 1
+#		    id = id + 1
 #		    print(id)
 		    number += 32
 	    if((lineLength % 32) != 0):
 		lineLength = len(line[number:])
-		print(line[number:])
-#		print(lineLength)
 		additionalZs = 32 - lineLength
-#(additionalZs * "Z")
-		print(id)
-		self.dataEntries[(id - 1)].readFromArchive(id, (line[number:]) + (additionalZs * "Z"))
-		id += 1
+
+		dataLocation = heapq.heappop(OPEN_DATA)[0]
+		print(dataLocation)
+		self.dataEntries[(dataLocation)].readFromArchive((dataLocation + 1), (line[number:]) + (additionalZs * "Z"))
+		self.archiveEntries[location].datablocks[count] = str(1)
+#		id += 1
+
+     def findEmpty(self):
+	pass
+	
+	
+	
+
+	
 
      def removeFromoArchive( self, filename ):
         # it must validate the file is or not in the archive and produce an error message
@@ -263,7 +297,7 @@ def addToArchive():
      filename = sys.argv[ 2 ];
      print("Adding to Archive:" + filename)
      archive = Archive()
-     #archive.readFromArchive()
+     archive.readFromArchive()
      archive.list()
      archive.addToArchive( filename )
      archive.list()
