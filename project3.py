@@ -55,6 +55,8 @@ import os
 
 import heapq
 
+from math import ceil
+
 #maximum number of entry for files in the archive  and also for data blocks for the archive
 MAX_ENTRY = 32
 
@@ -185,15 +187,12 @@ class Archive:
 	       if(line[:3] == '000'):
 	           heapq.heappush(OPEN_ENTRY, (count, self.archiveEntries[count]))
 	       else:
-		   print(line)
 	           self.archiveEntries[ count ].readFromArchive( line, count )
             else:
 	       index = count - 32
 	       if(line == 'ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ'):
-		   heapq.heappush(OPEN_DATA, (index, self.dataEntries[index])))
+		   heapq.heappush(OPEN_DATA, (index, self.dataEntries[index]))
 	       else:
-		   
-	           print("inserting line line into archive: {}".format(line))
     		   self.dataEntries[ index ].readFromArchive( index, line )
                    datablockid = datablockid + 1
             count = count + 1
@@ -216,17 +215,38 @@ class Archive:
 
 
      def addToArchive( self, filename ):
+	# must do validation on
+        # filename - done
+        # filesize vs maximum allowed per file -d
+        # filesize vs free space -d
+        # filename must be unique (case sensitive) -d
+
+	#Filename validation
 	if (len(filename) >8):
 	    print("Error, filename must be less than 9 characters!")
 	    exit()
-	print(FILE_NAME_CHECKER)
+	#Unique filename validation
 	try:
 	    if( (FILE_NAME_CHECKER[filename]) >= 0):
 		print("Filename already Found! Can not archive!")
 		exit()
 	except KeyError:
 		pass
-		
+	#Max data per file validation
+	if(os.path.getsize(filename) > 128):
+	    print ("Text file can not be more than 128 characters!\nYour text file is {} characters! Can not archive!".format(os.path.getsize(filename)))
+	    exit()
+
+	#Filesize vs free space validation
+	print("open data length: {}".format(len(OPEN_DATA)))
+	length = ((os.path.getsize(filename)) / float(32))
+	if not OPEN_DATA:
+	    print("Archive full!\nCan not Archive {}".format(filename))	
+	    exit()
+	print("length = {}".format(length))
+	if(len(OPEN_DATA) < length):
+	    print("Not enough space in archive!\nThere is only {} locations left in archive. Your file requires {} spaces!".format((len(OPEN_DATA)), int(ceil(length))))
+	    exit()
 		
 	thefile = open( filename, "r")
 	archive = open( ARCHIVE_FILENAME, "w")
@@ -235,25 +255,19 @@ class Archive:
 	self.archiveEntries[entryLocation].update(filename, os.path.getsize(filename))
 	self.addData(thefile, entryLocation)
 
-        # must do validation on
-        # filename - done
-        # filesize vs maximum allowed per file
-        # filesize vs free space
-        # filename must be unique (case sensitive)
-        # the archiveentry allocated for the file must be the 1st available starting at idx = 0
-        # the file must used the minimum set of datablock requires to store the file
-        # the datablock allocated for the file must be the 1st available starting at idx = 0
-        #
+
+    
         print("not implemented, this is your assignment\n")
      def addData(self, afile, location):
+        # the archiveentry allocated for the file must be the 1st available starting at idx = 0 -d
+        # the file must used the minimum set of datablock requires to store the file -d
+        # the datablock allocated for the file must be the 1st available starting at idx = 0 -d
+
 	number = 0
 	count = 1
 	for line in afile:
 	    line = line.strip('\n')
 	    lineLength = len(line)
-	    if((lineLength//32) > 4):
-		print ("Text file longer than 128 characters! Can not archive!")
-		exit()
 	    if(lineLength > 32):
 	    	for i in range((lineLength//32) + 1):
 		    remainder = lineLength - number
@@ -280,21 +294,19 @@ class Archive:
 	
 
      def removeFromArchive( self, filename ):
-        # it must validate the file is or not in the archive and produce an error message
+        # it must validate the file is or not in the archive and produce an error message -d
 	try:
-	    print(FILE_NAME_CHECKER)
 	    if( (FILE_NAME_CHECKER[filename]) >= 0):
 		pass
 	except KeyError:
 		print("{} not found!\nPlease Enter a filename within the Archive!".format(filename))
 		exit()
 	
-        # remove a file from the archive. It will reset the archiveentry to the free state (filename="", size=0, datablocks=0)
-	self.removeData(filename)
-	
-        # and overwrite the data in the datablocks with 'Z's
-        #
 
+     
+	self.removeData(filename)
+        # remove a file from the archive. It will reset the archiveentry to the free state 	(filename="", size=0, datablocks=0)
+	# and overwrite the data in the datablocks with 'Z's
         print("not implemented, this is your assignment\n")
      def removeData(self, filename):
 	removeBlocks = self.archiveEntries[FILE_NAME_CHECKER[filename]].DBL()
